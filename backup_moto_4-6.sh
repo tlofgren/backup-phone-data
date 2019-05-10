@@ -37,3 +37,9 @@ adb pull /sdcard/ideaCallRecorder .
 # links
 https://android.stackexchange.com/a/23608
 https://github.com/koush/support-wiki/wiki/Helium-Wiki
+
+# get size of folder
+adb shell du -s /storage/8014-13FF/smsBackupAndRestore | awk '{printf "%d", $1}'
+
+# get space available
+adb shell df -h $motosd | tail -1 | awk '{print $4}'
