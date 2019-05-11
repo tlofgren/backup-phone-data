@@ -29,19 +29,19 @@ CURR_YEAR=`date +%Y`
 DATA_BACKUP_DIR="/home/tyler/backup/moto/${CURR_DATETIME}"
 PIC_BACKUP_DIR="/media/tyler/tylerbackup/Pictures/${CURR_YEAR}/${CURR_DATE}"
 CALL_REC_BACKUP_DIR="${DATA_BACKUP_DIR}/CubeCallRecorder"
+ROCKETPLAYER_BACKUP_DIR="${DATA_BACKUP_DIR}/RocketPlayer"
 SEXY_BACKUP_DIR="/media/tyler/tylerbackup/backup/appdata/local/toosexy/${CURR_DATE}"
 
 MOTO_MAIN_STORAGE_DIR="/sdcard"
 MOTO_EXTERNAL_STORAGE_DIR="/storage/8014-13FF"
 MOTO_PIC_DIR="/sdcard/Pictures"
-MOTO_DOCS_DIR=$(join_by / "${MOTO_MAIN_STORAGE_DIR}" "Documents")
 MOTO_DCIM_DIR="/storage/8014-13FF/DCIM"
 MOTO_CAM_DIR="/storage/8014-13FF/DCIM/Camera"
 MOTO_SEXY_DIR="${MOTO_EXTERNAL_STORAGE_DIR}/toosexy"
 MOTO_MOVED_CAM_DIR=$(join_by / "${MOTO_DCIM_DIR}" "${CURR_DATE}")
 MOTO_CALL_REC_DIR="/sdcard/CubeCallRecorder/All"
 MOTO_AUDIO_REC_DIR="/sdcard/EasyVoiceRecorder"
-MOTO_CARBON_DIR="/storage/8014-13FF/carbon"
+MOTO_WECHAT_DIR="${MOTO_MAIN_STORAGE_DIR}/tencent/"
 MOTO_SMSBACKUPANDRESTORE="/storage/8014-13FF/smsBackupAndRestore"
 MOTO_SIGNAL_DIR=$(join_by / "${MOTO_MAIN_STORAGE_DIR}" "Signal/Backups")
 
@@ -103,7 +103,12 @@ done
 # done
 
 #####
-# Carbon / Helium Backup
+# Apps installed
+adb shell cmd package list packages -i > "${DATA_BACKUP_DIR}/pkg_list.txt"
+adb shell cmd package list packages -f > "${DATA_BACKUP_DIR}/pkg_list_assoc_files.txt"
+adb shell cmd package list packages -s > "${DATA_BACKUP_DIR}/pkg_list_system.txt"
+adb shell cmd package list packages -d > "${DATA_BACKUP_DIR}/pkg_list_disabled.txt"
+adb shell cmd package list packages -u > "${DATA_BACKUP_DIR}/pkg_list_uninstalled.txt"
 
 #####
 # SMS Backup and Restore
@@ -126,11 +131,30 @@ fi
 
 
 #####
-# Documents
+# Folders on Main Storage
+MOTO_DOCS_DIR=$(join_by / "${MOTO_MAIN_STORAGE_DIR}" "Documents")
 adb pull "${MOTO_DOCS_DIR}" "${DATA_BACKUP_DIR}"
 exit_if_fail "pull docs"
+
+MOTO_TOP_LEVEL_DIRS=( "carbon" "Documents" "Downloads" "EasyVoiceRecorder" "Music" "Playlists" "Voicemails" "WhatsApp" )
+for dir in "${MOTO_TOP_LEVEL_DIRS[@]}"; do
+    # TODO: pull each folder in list
+    echo $dir;
+done
+
+#####
+# RocketPlayer
+echo "Creating folder ${ROCKETPLAYER_BACKUP_DIR}"
+mkdir -p "${ROCKETPLAYER_BACKUP_DIR}"
+exit_if_fail "mkdir rocketplayer"
+adb pull "${MOTO_MAIN_STORAGE_DIR}/RocketPlayer/livelists.xml" "${ROCKETPLAYER_BACKUP_DIR}"
+exit_if_fail "pull rocketplayer livelists"
 
 #####
 # Signal
 adb pull "${MOTO_SIGNAL_DIR}" "${DATA_BACKUP_DIR}"
 exit_if_fail "pull Signal backup"
+
+#####
+# Tencent
+# Unnecessarily complicated - desktop backup is "Backup.db"
