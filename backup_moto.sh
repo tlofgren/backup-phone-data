@@ -69,7 +69,7 @@ MOTO_WECHAT_DIR="${MOTO_MAIN_STORAGE_DIR}/tencent/" # TODO
 MOTO_NOVABACKUP_DIR="${MOTO_MAIN_STORAGE_DIR}/data/com.teslacoilsw.launcher/backup" # TODO
 MOTO_SMSBACKUPANDRESTORE="/storage/8014-13FF/smsBackupAndRestore"
 MOTO_SIGNAL_DIR=$(join_by / "${MOTO_MAIN_STORAGE_DIR}" "Signal/Backups")
-MOTO_CARBON_DIR="${MOTO_MAIN_STORAGE_DIR}/carbon"
+MOTO_CARBON_DIR="${MOTO_EXTERNAL_STORAGE_DIR}/carbon"
 
 #####
 # setup
