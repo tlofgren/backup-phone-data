@@ -31,6 +31,19 @@ pull_folder() {
     return ${exitcode}
 }
 
+pull_and_delete() {
+    local src="$1"
+    local tgt="$2"
+    pull_folder "${src}" "${tgt}"
+    local exitcode=$?
+    if [ ${exitcode} -eq 0 ]; then
+        adb shell rm -rf "${src}"
+    else
+        echo "Warning from pull_and_delete: will not remove '${src}'"
+    fi
+    return $?
+}
+
 #####
 # Vars
 CURR_DATETIME=`date +%Y-%m-%d_%H%M`
@@ -56,6 +69,7 @@ MOTO_WECHAT_DIR="${MOTO_MAIN_STORAGE_DIR}/tencent/" # TODO
 MOTO_NOVABACKUP_DIR="${MOTO_MAIN_STORAGE_DIR}/data/com.teslacoilsw.launcher/backup" # TODO
 MOTO_SMSBACKUPANDRESTORE="/storage/8014-13FF/smsBackupAndRestore"
 MOTO_SIGNAL_DIR=$(join_by / "${MOTO_MAIN_STORAGE_DIR}" "Signal/Backups")
+MOTO_CARBON_DIR="${MOTO_MAIN_STORAGE_DIR}/carbon"
 
 #####
 # setup
@@ -83,11 +97,19 @@ mkdir -p "${SEXY_BACKUP_DIR}"
 exit_if_fail "mkdir sexy"
 
 #####
+# Apps installed
+adb shell cmd package list packages -i > "${DATA_BACKUP_DIR}/pkg_list.txt"
+adb shell cmd package list packages -f > "${DATA_BACKUP_DIR}/pkg_list_assoc_files.txt"
+adb shell cmd package list packages -s > "${DATA_BACKUP_DIR}/pkg_list_system.txt"
+adb shell cmd package list packages -d > "${DATA_BACKUP_DIR}/pkg_list_disabled.txt"
+adb shell cmd package list packages -u > "${DATA_BACKUP_DIR}/pkg_list_uninstalled.txt"
+
+#####
 # Pictures
 for picdir in $(adb shell "ls ${MOTO_PIC_DIR}"); do
     picpath=`join_by / ${MOTO_PIC_DIR} ${picdir}`
-    adb pull "${picpath}" "${PIC_BACKUP_DIR}"
-    exit_if_fail "adb pull ${picpath}"
+    pull_and_delete "${picpath}" "${PIC_BACKUP_DIR}"
+    # exit_if_fail "adb pull ${picpath}"
 done
 
 # Camera
@@ -97,10 +119,16 @@ echo "Moving Camera dir ${MOTO_CAM_DIR} to ${MOTO_MOVED_CAM_DIR}"
 adb shell "mv ${MOTO_CAM_DIR} ${MOTO_MOVED_CAM_DIR}"
 
 # toosexy
+MOVED_SEXY_DIR=$(join_by / ${MOTO_SEXY_DIR} ${CURR_DATE})
+adb shell mkdir -p "${MOVED_SEXY_DIR}"
 for file in $(adb shell "ls ${MOTO_SEXY_DIR}"); do
     filepath=$(join_by / ${MOTO_SEXY_DIR} ${file})
-    adb pull "${filepath}" "${SEXY_BACKUP_DIR}"
-    exit_if_fail "pull sexy ${file}"
+    pull_folder "${filepath}" "${SEXY_BACKUP_DIR}"
+    if [ $? -eq 0 ]; then
+        echo "Moving file ${file} to ${MOVED_SEXY_DIR}"
+        adb shell mv "${filepath}" "${MOVED_SEXY_DIR}"
+        exit_if_fail "mv sexy ${file}"
+    fi
 done
 # TODO: remove files from moto
 
@@ -108,23 +136,15 @@ done
 # Recordings
 pull_folder "${MOTO_AUDIO_REC_DIR}" "${DATA_BACKUP_DIR}"
 if [ $? -ne 0 ]; then
-    pull_folder "${MOTO_MAIN_STORAGE_DIR}/EasyVoiceRecorder" "${DATA_BACKUP_DIR}"
+    pull_and_delete "${MOTO_MAIN_STORAGE_DIR}/EasyVoiceRecorder" "${DATA_BACKUP_DIR}"
     # exit_if_fail "pull audio rec"
 fi
 
 for amr in $(adb shell "ls ${MOTO_CALL_REC_DIR}"); do
     amrpath=`join_by / ${MOTO_CALL_REC_DIR} ${amr}`
-    adb pull "${amrpath}" "${CALL_REC_BACKUP_DIR}"
-    exit_if_fail "pull amr ${amr}"
+    pull_and_delete "${amrpath}" "${CALL_REC_BACKUP_DIR}"
+    # exit_if_fail "pull amr ${amr}"
 done
-
-#####
-# Apps installed
-adb shell cmd package list packages -i > "${DATA_BACKUP_DIR}/pkg_list.txt"
-adb shell cmd package list packages -f > "${DATA_BACKUP_DIR}/pkg_list_assoc_files.txt"
-adb shell cmd package list packages -s > "${DATA_BACKUP_DIR}/pkg_list_system.txt"
-adb shell cmd package list packages -d > "${DATA_BACKUP_DIR}/pkg_list_disabled.txt"
-adb shell cmd package list packages -u > "${DATA_BACKUP_DIR}/pkg_list_uninstalled.txt"
 
 #####
 # SMS Backup and Restore
@@ -136,20 +156,20 @@ if [ $((${MOTO_EXT_SPACE_AVAIL} - ${SIZE_SMS} > 100000)) ]; then # units in KB
     echo "***will compress sms/mms..."
     adb shell "tar -czvf  ${SMS_GZIP_DEST} ${MOTO_SMSBACKUPANDRESTORE}"
     exit_if_fail "gzip sms"
-    adb pull "${SMS_GZIP_DEST}" "${DATA_BACKUP_DIR}"
-    exit_if_fail "pull sms gzip"
-    adb shell rm -rf "${SMS_GZIP_DEST}"
-    exit_if_fail "rm sms gzip"
+    pull_and_delete "${SMS_GZIP_DEST}" "${DATA_BACKUP_DIR}"
+    # exit_if_fail "pull sms gzip"
+    # adb shell rm -f "${SMS_GZIP_DEST}"
+    # exit_if_fail "rm sms gzip"
 else
     echo "Not enough space to zip up sms; will transfer directly"
-    pull_folder "${MOTO_SMSBACKUPANDRESTORE}" "${DATA_BACKUP_DIR}"
+    pull_and_delete "${MOTO_SMSBACKUPANDRESTORE}" "${DATA_BACKUP_DIR}"
     # exit_if_fail "pull sms uncompressed"
 fi
 
 
 #####
-# Folders on Main Storage
-MOTO_TOP_LEVEL_DIRS=( "AMdroid" "beam" "carbon" "Document" "Documents" "Download" "EasyVoiceRecorder" "games" "Music" "Playlists" "SmsContactsBackup" "Snapchat" "Voicemails" "WhatsApp" )
+# Folders on Main Storage to keep after backup
+MOTO_TOP_LEVEL_DIRS=( "AMdroid" "beam" "Document" "Documents" "Download" "games" "Music" "Playlists" "SmsContactsBackup" "Snapchat" "Voicemails" "WhatsApp" )
 for dir in "${MOTO_TOP_LEVEL_DIRS[@]}"; do
     # TODO: pull each folder in list
     TOP_LEVEL_PATH="${MOTO_MAIN_STORAGE_DIR}/${dir}"
@@ -171,6 +191,9 @@ pull_folder "${MOTO_SIGNAL_DIR}" "${DATA_BACKUP_DIR}"
 # Nova
 pull_folder "${MOTO_NOVABACKUP_DIR}" "${DATA_BACKUP_DIR}"
 
+#####
+# Carbon/Helium Backup
+pull_and_delete "${MOTO_CARBON_DIR}" "${DATA_BACKUP_DIR}"
 
 #####
 # Tencent
