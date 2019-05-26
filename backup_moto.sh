@@ -37,6 +37,7 @@ pull_and_delete() {
     pull_folder "${src}" "${tgt}"
     local exitcode=$?
     if [ ${exitcode} -eq 0 ]; then
+        echo "Deleting '${src}'..."
         adb shell rm -rf "${src}"
     else
         echo "Warning from pull_and_delete: will not remove '${src}'"
@@ -69,7 +70,7 @@ MOTO_WECHAT_DIR="${MOTO_MAIN_STORAGE_DIR}/tencent/" # TODO
 MOTO_NOVABACKUP_DIR="${MOTO_MAIN_STORAGE_DIR}/data/com.teslacoilsw.launcher/backup" # TODO
 MOTO_SMSBACKUPANDRESTORE="/storage/8014-13FF/smsBackupAndRestore"
 MOTO_SIGNAL_DIR=$(join_by / "${MOTO_MAIN_STORAGE_DIR}" "Signal/Backups")
-MOTO_CARBON_DIR="${MOTO_EXTERNAL_STORAGE_DIR}/carbon"
+MOTO_CARBON_DIR="${MOTO_MAIN_STORAGE_DIR}/carbon"
 
 #####
 # setup
@@ -123,9 +124,12 @@ MOVED_SEXY_DIR=$(join_by / ${MOTO_SEXY_DIR} ${CURR_DATE})
 adb shell mkdir -p "${MOVED_SEXY_DIR}"
 for file in $(adb shell "ls ${MOTO_SEXY_DIR}"); do
     filepath=$(join_by / ${MOTO_SEXY_DIR} ${file})
+    if [ "${filepath}" == "${MOVED_SEXY_DIR}" ]; then
+        continue;
+    fi
     pull_folder "${filepath}" "${SEXY_BACKUP_DIR}"
     if [ $? -eq 0 ]; then
-        echo "Moving file ${file} to ${MOVED_SEXY_DIR}"
+        echo "Moving file ${filepath} to ${MOVED_SEXY_DIR}"
         adb shell mv "${filepath}" "${MOVED_SEXY_DIR}"
         exit_if_fail "mv sexy ${file}"
     fi
