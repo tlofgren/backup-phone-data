@@ -20,6 +20,17 @@ function join_by {
     echo "$*";
 }
 
+pull_folder() {
+    local src="$1"
+    local tgt="$2"
+    adb pull "${src}" "${tgt}"
+    local exitcode=$?
+    if [ ${exitcode} -ne 0 ]; then
+        echo "Warning: could not pull '${src}' to '${target}'"
+    fi
+    return ${exitcode}
+}
+
 #####
 # Vars
 CURR_DATETIME=`date +%Y-%m-%d_%H%M`
@@ -40,8 +51,9 @@ MOTO_CAM_DIR="/storage/8014-13FF/DCIM/Camera"
 MOTO_SEXY_DIR="${MOTO_EXTERNAL_STORAGE_DIR}/toosexy"
 MOTO_MOVED_CAM_DIR=$(join_by / "${MOTO_DCIM_DIR}" "${CURR_DATE}")
 MOTO_CALL_REC_DIR="/sdcard/CubeCallRecorder/All"
-MOTO_AUDIO_REC_DIR="/sdcard/EasyVoiceRecorder"
-MOTO_WECHAT_DIR="${MOTO_MAIN_STORAGE_DIR}/tencent/"
+MOTO_AUDIO_REC_DIR="${MOTO_EXTERNAL_STORAGE_DIR}/EasyVoiceRecorder"
+MOTO_WECHAT_DIR="${MOTO_MAIN_STORAGE_DIR}/tencent/" # TODO
+MOTO_NOVABACKUP_DIR="${MOTO_MAIN_STORAGE_DIR}/data/com.teslacoilsw.launcher/backup" # TODO
 MOTO_SMSBACKUPANDRESTORE="/storage/8014-13FF/smsBackupAndRestore"
 MOTO_SIGNAL_DIR=$(join_by / "${MOTO_MAIN_STORAGE_DIR}" "Signal/Backups")
 
@@ -58,9 +70,9 @@ echo "Creating folder ${DATA_BACKUP_DIR}"
 mkdir -p "${DATA_BACKUP_DIR}"
 exit_if_fail "mkdir data"
 
-# echo "Creating folder ${CALL_REC_BACKUP_DIR}"
-# mkdir -p "${CALL_REC_BACKUP_DIR}"
-# exit_if_fail "mkdir call rec"
+echo "Creating folder ${CALL_REC_BACKUP_DIR}"
+mkdir -p "${CALL_REC_BACKUP_DIR}"
+exit_if_fail "mkdir call rec"
 
 echo "Creating folder ${PIC_BACKUP_DIR}"
 mkdir -p "${PIC_BACKUP_DIR}"
@@ -72,18 +84,19 @@ exit_if_fail "mkdir sexy"
 
 #####
 # Pictures
-# for picdir in $(adb shell "ls ${MOTO_PIC_DIR}"); do
-#     picpath=`join_by / ${MOTO_PIC_DIR} ${picdir}`
-#     adb pull "${picpath}" "${PIC_BACKUP_DIR}"
-#     exit_if_fail "adb pull ${picpath}"
-# done
+for picdir in $(adb shell "ls ${MOTO_PIC_DIR}"); do
+    picpath=`join_by / ${MOTO_PIC_DIR} ${picdir}`
+    adb pull "${picpath}" "${PIC_BACKUP_DIR}"
+    exit_if_fail "adb pull ${picpath}"
+done
 
-# adb pull "${MOTO_CAM_DIR}" "${PIC_BACKUP_DIR}"
-# exit_if_fail "adb pull camera"
+# Camera
+pull_folder "${MOTO_CAM_DIR}" "${PIC_BACKUP_DIR}"
 
-# echo "Moving Camera dir ${MOTO_CAM_DIR} to ${MOTO_MOVED_CAM_DIR}"
-# adb shell "mv ${MOTO_CAM_DIR} ${MOTO_MOVED_CAM_DIR}"
+echo "Moving Camera dir ${MOTO_CAM_DIR} to ${MOTO_MOVED_CAM_DIR}"
+adb shell "mv ${MOTO_CAM_DIR} ${MOTO_MOVED_CAM_DIR}"
 
+# toosexy
 for file in $(adb shell "ls ${MOTO_SEXY_DIR}"); do
     filepath=$(join_by / ${MOTO_SEXY_DIR} ${file})
     adb pull "${filepath}" "${SEXY_BACKUP_DIR}"
@@ -93,14 +106,17 @@ done
 
 #####
 # Recordings
-# adb pull "${MOTO_AUDIO_REC_DIR}" "${DATA_BACKUP_DIR}"
-# exit_if_fail "pull audio rec"
+pull_folder "${MOTO_AUDIO_REC_DIR}" "${DATA_BACKUP_DIR}"
+if [ $? -ne 0 ]; then
+    pull_folder "${MOTO_MAIN_STORAGE_DIR}/EasyVoiceRecorder" "${DATA_BACKUP_DIR}"
+    # exit_if_fail "pull audio rec"
+fi
 
-# for amr in $(adb shell "ls ${MOTO_CALL_REC_DIR}"); do
-#     amrpath=`join_by / ${MOTO_CALL_REC_DIR} ${amr}`
-#     adb pull "${amrpath}" "${CALL_REC_BACKUP_DIR}"
-#     exit_if_fail "pull amr ${amr}"
-# done
+for amr in $(adb shell "ls ${MOTO_CALL_REC_DIR}"); do
+    amrpath=`join_by / ${MOTO_CALL_REC_DIR} ${amr}`
+    adb pull "${amrpath}" "${CALL_REC_BACKUP_DIR}"
+    exit_if_fail "pull amr ${amr}"
+done
 
 #####
 # Apps installed
@@ -117,6 +133,7 @@ SMS_GZIP_DEST=$(join_by / ${EXTERNAL_DOWNLOAD} "smsbackup${CURR_DATETIME}.tar.gz
 SIZE_SMS=$(adb shell du -s ${MOTO_SMSBACKUPANDRESTORE} | awk '{printf "%d", $1}')
 MOTO_EXT_SPACE_AVAIL=$(adb shell df ${EXTERNAL_DOWNLOAD} | tail -1 | awk '{print $4}')
 if [ $((${MOTO_EXT_SPACE_AVAIL} - ${SIZE_SMS} > 100000)) ]; then # units in KB
+    echo "***will compress sms/mms..."
     adb shell "tar -czvf  ${SMS_GZIP_DEST} ${MOTO_SMSBACKUPANDRESTORE}"
     exit_if_fail "gzip sms"
     adb pull "${SMS_GZIP_DEST}" "${DATA_BACKUP_DIR}"
@@ -125,21 +142,18 @@ if [ $((${MOTO_EXT_SPACE_AVAIL} - ${SIZE_SMS} > 100000)) ]; then # units in KB
     exit_if_fail "rm sms gzip"
 else
     echo "Not enough space to zip up sms; will transfer directly"
-    adb pull "${MOTO_SMSBACKUPANDRESTORE}" "${DATA_BACKUP_DIR}"
-    exit_if_fail "pull sms uncompressed"
+    pull_folder "${MOTO_SMSBACKUPANDRESTORE}" "${DATA_BACKUP_DIR}"
+    # exit_if_fail "pull sms uncompressed"
 fi
 
 
 #####
 # Folders on Main Storage
-MOTO_DOCS_DIR=$(join_by / "${MOTO_MAIN_STORAGE_DIR}" "Documents")
-adb pull "${MOTO_DOCS_DIR}" "${DATA_BACKUP_DIR}"
-exit_if_fail "pull docs"
-
-MOTO_TOP_LEVEL_DIRS=( "carbon" "Documents" "Downloads" "EasyVoiceRecorder" "Music" "Playlists" "Voicemails" "WhatsApp" )
+MOTO_TOP_LEVEL_DIRS=( "AMdroid" "beam" "carbon" "Document" "Documents" "Download" "EasyVoiceRecorder" "games" "Music" "Playlists" "SmsContactsBackup" "Snapchat" "Voicemails" "WhatsApp" )
 for dir in "${MOTO_TOP_LEVEL_DIRS[@]}"; do
     # TODO: pull each folder in list
-    echo $dir;
+    TOP_LEVEL_PATH="${MOTO_MAIN_STORAGE_DIR}/${dir}"
+    pull_folder "${TOP_LEVEL_PATH}" "${DATA_BACKUP_DIR}"
 done
 
 #####
@@ -147,13 +161,16 @@ done
 echo "Creating folder ${ROCKETPLAYER_BACKUP_DIR}"
 mkdir -p "${ROCKETPLAYER_BACKUP_DIR}"
 exit_if_fail "mkdir rocketplayer"
-adb pull "${MOTO_MAIN_STORAGE_DIR}/RocketPlayer/livelists.xml" "${ROCKETPLAYER_BACKUP_DIR}"
-exit_if_fail "pull rocketplayer livelists"
+pull_folder "${MOTO_MAIN_STORAGE_DIR}/RocketPlayer/livelists.xml" "${ROCKETPLAYER_BACKUP_DIR}"
 
 #####
 # Signal
-adb pull "${MOTO_SIGNAL_DIR}" "${DATA_BACKUP_DIR}"
-exit_if_fail "pull Signal backup"
+pull_folder "${MOTO_SIGNAL_DIR}" "${DATA_BACKUP_DIR}"
+
+#####
+# Nova
+pull_folder "${MOTO_NOVABACKUP_DIR}" "${DATA_BACKUP_DIR}"
+
 
 #####
 # Tencent
