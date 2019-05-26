@@ -99,11 +99,13 @@ exit_if_fail "mkdir sexy"
 
 #####
 # Apps installed
-adb shell cmd package list packages -i > "${DATA_BACKUP_DIR}/pkg_list.txt"
-adb shell cmd package list packages -f > "${DATA_BACKUP_DIR}/pkg_list_assoc_files.txt"
-adb shell cmd package list packages -s > "${DATA_BACKUP_DIR}/pkg_list_system.txt"
-adb shell cmd package list packages -d > "${DATA_BACKUP_DIR}/pkg_list_disabled.txt"
-adb shell cmd package list packages -u > "${DATA_BACKUP_DIR}/pkg_list_uninstalled.txt"
+DATA_BACKUP_APPLISTS="${DATA_BACKUP_DIR}/pkglists"
+mkdir -p "${DATA_BACKUP_APPLISTS}"
+adb shell cmd package list packages -i > "${DATA_BACKUP_APPLISTS}/pkg_list.txt"
+adb shell cmd package list packages -f > "${DATA_BACKUP_APPLISTS}/pkg_list_assoc_files.txt"
+adb shell cmd package list packages -s > "${DATA_BACKUP_APPLISTS}/pkg_list_system.txt"
+adb shell cmd package list packages -d > "${DATA_BACKUP_APPLISTS}/pkg_list_disabled.txt"
+adb shell cmd package list packages -u > "${DATA_BACKUP_APPLISTS}/pkg_list_uninstalled.txt"
 
 #####
 # Pictures
