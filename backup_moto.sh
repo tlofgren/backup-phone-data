@@ -45,6 +45,15 @@ pull_and_delete() {
     return $?
 }
 
+pull_files_and_delete() {
+    local src_dir="$1"
+    local tgt_dir="$2"
+    for file in $(adb shell "ls ${src_dir}"); do
+        filepath=`join_by / ${src_dir} ${file}`
+        pull_and_delete "${filepath}" "${tgt_dir}"
+    done
+}
+
 #####
 # Vars
 CURR_DATETIME=`date +%Y-%m-%d_%H%M`
@@ -71,6 +80,7 @@ MOTO_NOVABACKUP_DIR="${MOTO_MAIN_STORAGE_DIR}/data/com.teslacoilsw.launcher/back
 MOTO_SMSBACKUPANDRESTORE="/storage/8014-13FF/smsBackupAndRestore"
 MOTO_SIGNAL_DIR=$(join_by / "${MOTO_MAIN_STORAGE_DIR}" "Signal/Backups")
 MOTO_CARBON_DIR="${MOTO_MAIN_STORAGE_DIR}/carbon"
+MOTO_AMDROID_DIR="${MOTO_MAIN_STORAGE_DIR}/AMdroid"
 
 #####
 # setup
@@ -191,11 +201,11 @@ pull_folder "${MOTO_MAIN_STORAGE_DIR}/RocketPlayer/livelists.xml" "${ROCKETPLAYE
 
 #####
 # Signal
-pull_folder "${MOTO_SIGNAL_DIR}" "${DATA_BACKUP_DIR}"
+pull_files_and_delete "${MOTO_SIGNAL_DIR}" "${DATA_BACKUP_DIR}"
 
 #####
 # Nova
-pull_folder "${MOTO_NOVABACKUP_DIR}" "${DATA_BACKUP_DIR}"
+pull_files_and_delete "${MOTO_NOVABACKUP_DIR}" "${DATA_BACKUP_DIR}"
 
 #####
 # Carbon/Helium Backup
@@ -204,3 +214,7 @@ pull_and_delete "${MOTO_CARBON_DIR}" "${DATA_BACKUP_DIR}"
 #####
 # Tencent
 # Unnecessarily complicated - desktop backup is "Backup.db"
+
+####
+# AMdroid
+pull_files_and_delete "${MOTO_AMDROID_DIR}" "${DATA_BACKUP_DIR}"
