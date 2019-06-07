@@ -64,14 +64,14 @@ DATA_BACKUP_DIR="/home/tyler/backup/moto/${CURR_DATETIME}"
 PIC_BACKUP_DIR="/media/tyler/tylerbackup/Pictures/${CURR_YEAR}/${CURR_DATE}"
 CALL_REC_BACKUP_DIR="${DATA_BACKUP_DIR}/CubeCallRecorder"
 ROCKETPLAYER_BACKUP_DIR="${DATA_BACKUP_DIR}/RocketPlayer"
-SEXY_BACKUP_DIR="/media/tyler/tylerbackup/backup/appdata/local/toosexy/${CURR_DATE}"
+PRIVATE_BACKUP_DIR="/media/tyler/tylerbackup/backup/appdata/local/toosexy/${CURR_DATE}"
 
 MOTO_MAIN_STORAGE_DIR="/sdcard"
 MOTO_EXTERNAL_STORAGE_DIR="/storage/8014-13FF"
 MOTO_PIC_DIR="/sdcard/Pictures"
 MOTO_DCIM_DIR="/storage/8014-13FF/DCIM"
 MOTO_CAM_DIR="/storage/8014-13FF/DCIM/Camera"
-MOTO_SEXY_DIR="${MOTO_EXTERNAL_STORAGE_DIR}/toosexy"
+MOTO_PRIVATE_DIR="${MOTO_EXTERNAL_STORAGE_DIR}/toosexy"
 MOTO_MOVED_CAM_DIR=$(join_by / "${MOTO_DCIM_DIR}" "${CURR_DATE}")
 MOTO_CALL_REC_DIR="/sdcard/CubeCallRecorder/All"
 MOTO_AUDIO_REC_DIR="${MOTO_EXTERNAL_STORAGE_DIR}/EasyVoiceRecorder"
@@ -103,8 +103,8 @@ echo "Creating folder ${PIC_BACKUP_DIR}"
 mkdir -p "${PIC_BACKUP_DIR}"
 exit_if_fail "mkdir pic"
 
-echo "Creating folder ${SEXY_BACKUP_DIR}"
-mkdir -p "${SEXY_BACKUP_DIR}"
+echo "Creating folder ${PRIVATE_BACKUP_DIR}"
+mkdir -p "${PRIVATE_BACKUP_DIR}"
 exit_if_fail "mkdir sexy"
 
 #####
@@ -131,19 +131,19 @@ pull_folder "${MOTO_CAM_DIR}" "${PIC_BACKUP_DIR}"
 echo "Moving Camera dir ${MOTO_CAM_DIR} to ${MOTO_MOVED_CAM_DIR}"
 adb shell "mv ${MOTO_CAM_DIR} ${MOTO_MOVED_CAM_DIR}"
 
-# toosexy
-MOVED_SEXY_DIR=$(join_by / ${MOTO_SEXY_DIR} ${CURR_DATE})
-adb shell mkdir -p "${MOVED_SEXY_DIR}"
-for file in $(adb shell "ls ${MOTO_SEXY_DIR}"); do
-    filepath=$(join_by / ${MOTO_SEXY_DIR} ${file})
-    if [ "${filepath}" == "${MOVED_SEXY_DIR}" ]; then
+# private files
+MOVED_PRIVATE_DIR=$(join_by / ${MOTO_PRIVATE_DIR} ${CURR_DATE})
+adb shell mkdir -p "${MOVED_PRIVATE_DIR}"
+for file in $(adb shell "ls ${MOTO_PRIVATE_DIR}"); do
+    filepath=$(join_by / ${MOTO_PRIVATE_DIR} ${file})
+    if [ "${filepath}" == "${MOVED_PRIVATE_DIR}" ]; then
         continue;
     fi
-    pull_folder "${filepath}" "${SEXY_BACKUP_DIR}"
+    pull_folder "${filepath}" "${PRIVATE_BACKUP_DIR}"
     if [ $? -eq 0 ]; then
-        echo "Moving file ${filepath} to ${MOVED_SEXY_DIR}"
-        adb shell mv "${filepath}" "${MOVED_SEXY_DIR}"
-        exit_if_fail "mv sexy ${file}"
+        echo "Moving file ${filepath} to ${MOVED_PRIVATE_DIR}"
+        adb shell mv "${filepath}" "${MOVED_PRIVATE_DIR}"
+        exit_if_fail "mv private ${file}"
     fi
 done
 # TODO: remove files from moto
