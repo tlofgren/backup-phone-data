@@ -60,24 +60,24 @@ CURR_DATETIME=`date +%Y-%m-%d_%H%M`
 CURR_DATE=`date +%Y-%m-%d`
 CURR_YEAR=`date +%Y`
 
-DATA_BACKUP_DIR="/home/tyler/backup/moto/${CURR_DATETIME}"
+DATA_BACKUP_DIR="/home/tyler/backup/galaxy/${CURR_DATETIME}"
 PIC_BACKUP_DIR="/media/tyler/tylerbackup/Pictures/${CURR_YEAR}/${CURR_DATE}"
 CALL_REC_BACKUP_DIR="${DATA_BACKUP_DIR}/CubeCallRecorder"
 ROCKETPLAYER_BACKUP_DIR="${DATA_BACKUP_DIR}/RocketPlayer"
 PRIVATE_BACKUP_DIR="/media/tyler/tylerbackup/backup/appdata/local/toosexy/${CURR_DATE}"
 
-MOTO_MAIN_STORAGE_DIR="/sdcard"
-MOTO_EXTERNAL_STORAGE_DIR="/storage/8014-13FF"
-MOTO_PIC_DIR="/sdcard/Pictures"
-MOTO_DCIM_DIR="/storage/8014-13FF/DCIM"
-MOTO_CAM_DIR="/storage/8014-13FF/DCIM/Camera"
-MOTO_PRIVATE_DIR="${MOTO_EXTERNAL_STORAGE_DIR}/toosexy"
+MOTO_MAIN_STORAGE_DIR="/storage/emulated/0"
+# MOTO_EXTERNAL_STORAGE_DIR="/storage/8014-13FF"
+MOTO_PIC_DIR="${MOTO_MAIN_STORAGE_DIR}/Pictures"
+MOTO_DCIM_DIR="${MOTO_MAIN_STORAGE_DIR}/DCIM"
+MOTO_CAM_DIR="${MOTO_MAIN_STORAGE_DIR}/DCIM/Camera"
+MOTO_PRIVATE_DIR="${MOTO_MAIN_STORAGE_DIR}/.toozexy"
 MOTO_MOVED_CAM_DIR=$(join_by / "${MOTO_DCIM_DIR}" "${CURR_DATE}")
 MOTO_CALL_REC_DIR="/sdcard/CubeCallRecorder/All"
-MOTO_AUDIO_REC_DIR="${MOTO_EXTERNAL_STORAGE_DIR}/EasyVoiceRecorder"
+MOTO_AUDIO_REC_DIR="${MOTO_MAIN_STORAGE_DIR}/EasyVoiceRecorder"
 MOTO_WECHAT_DIR="${MOTO_MAIN_STORAGE_DIR}/tencent/" # TODO
-MOTO_NOVABACKUP_DIR="${MOTO_MAIN_STORAGE_DIR}/data/com.teslacoilsw.launcher/backup" # TODO
-MOTO_SMSBACKUPANDRESTORE="/storage/8014-13FF/smsBackupAndRestore"
+MOTO_NOVABACKUP_DIR="${MOTO_MAIN_STORAGE_DIR}/data/com.teslacoilsw.launcher/backup"
+MOTO_SMSBACKUPANDRESTORE="${MOTO_MAIN_STORAGE_DIR}/smsBackupAndRestore"
 MOTO_SIGNAL_DIR=$(join_by / "${MOTO_MAIN_STORAGE_DIR}" "Signal/Backups")
 MOTO_CARBON_DIR="${MOTO_MAIN_STORAGE_DIR}/carbon"
 MOTO_AMDROID_DIR="${MOTO_MAIN_STORAGE_DIR}/AMdroid"
@@ -164,10 +164,10 @@ done
 
 #####
 # SMS Backup and Restore
-EXTERNAL_DOWNLOAD=$(join_by / ${MOTO_EXTERNAL_STORAGE_DIR} "Download")
-SMS_GZIP_DEST=$(join_by / ${EXTERNAL_DOWNLOAD} "smsbackup${CURR_DATETIME}.tar.gz")
+DOWNLOAD_DIR=$(join_by / ${MOTO_MAIN_STORAGE_DIR} "Download")
+SMS_GZIP_DEST=$(join_by / ${DOWNLOAD_DIR} "smsbackup${CURR_DATETIME}.tar.gz")
 SIZE_SMS=$(adb shell du -s ${MOTO_SMSBACKUPANDRESTORE} | awk '{printf "%d", $1}')
-MOTO_EXT_SPACE_AVAIL=$(adb shell df ${EXTERNAL_DOWNLOAD} | tail -1 | awk '{print $4}')
+MOTO_EXT_SPACE_AVAIL=$(adb shell df ${DOWNLOAD_DIR} | tail -1 | awk '{print $4}')
 if [ $((${MOTO_EXT_SPACE_AVAIL} - ${SIZE_SMS} > 100000)) ]; then # units in KB
     echo "***will compress sms/mms..."
     adb shell "tar -czvf  ${SMS_GZIP_DEST} ${MOTO_SMSBACKUPANDRESTORE}"
