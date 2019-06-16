@@ -165,14 +165,15 @@ done
 #####
 # SMS Backup and Restore
 DOWNLOAD_DIR=$(join_by / ${MOTO_MAIN_STORAGE_DIR} "Download")
-SMS_GZIP_DEST=$(join_by / ${DOWNLOAD_DIR} "smsbackup${CURR_DATETIME}.tar.gz")
+SMS_GZIP_DEST=$(join_by / "${DATA_BACKUP_DIR}" "smsbackup${CURR_DATETIME}.tar.gz")
 SIZE_SMS=$(adb shell du -s ${MOTO_SMSBACKUPANDRESTORE} | awk '{printf "%d", $1}')
 MOTO_EXT_SPACE_AVAIL=$(adb shell df ${DOWNLOAD_DIR} | tail -1 | awk '{print $4}')
 if [ $((${MOTO_EXT_SPACE_AVAIL} - ${SIZE_SMS} > 100000)) ]; then # units in KB
     echo "***will compress sms/mms..."
-    adb shell "tar -czvf  ${SMS_GZIP_DEST} ${MOTO_SMSBACKUPANDRESTORE}"
+    adb shell tar -czvf - "${MOTO_SMSBACKUPANDRESTORE}" > "${SMS_GZIP_DEST}"
     exit_if_fail "gzip sms"
-    pull_and_delete "${SMS_GZIP_DEST}" "${DATA_BACKUP_DIR}"
+    # TODO: remove sms backup xml after pull
+    # pull_and_delete "${SMS_GZIP_DEST}" "${DATA_BACKUP_DIR}"
     # exit_if_fail "pull sms gzip"
     # adb shell rm -f "${SMS_GZIP_DEST}"
     # exit_if_fail "rm sms gzip"
