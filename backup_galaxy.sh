@@ -61,10 +61,10 @@ CURR_DATE=`date +%Y-%m-%d`
 CURR_YEAR=`date +%Y`
 
 DATA_BACKUP_DIR="/home/tyler/backup/galaxy/${CURR_DATETIME}"
-PIC_BACKUP_DIR="/media/tyler/tylerbackup/Pictures/${CURR_YEAR}/${CURR_DATE}"
+PIC_BACKUP_DIR="/media/tyler/shared/Pictures/${CURR_YEAR}/${CURR_DATE}"
 CALL_REC_BACKUP_DIR="${DATA_BACKUP_DIR}/CubeCallRecorder"
 ROCKETPLAYER_BACKUP_DIR="${DATA_BACKUP_DIR}/RocketPlayer"
-PRIVATE_BACKUP_DIR="/media/tyler/tylerbackup/backup/appdata/local/toosexy/${CURR_DATE}"
+PRIVATE_BACKUP_DIR="/media/tyler/shared/tyler/backup/appdata/local/toosexy/${CURR_DATE}"
 
 MOTO_MAIN_STORAGE_DIR="/storage/emulated/0"
 # MOTO_EXTERNAL_STORAGE_DIR="/storage/8014-13FF"
