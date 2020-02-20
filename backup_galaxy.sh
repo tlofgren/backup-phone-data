@@ -38,7 +38,7 @@ pull_and_delete() {
     local exitcode=$?
     if [ ${exitcode} -eq 0 ]; then
         echo "Deleting '${src}'..."
-        adb shell rm -rf "${src}"
+        adb shell 'rm -rf "${src}"'
     else
         echo "Warning from pull_and_delete: will not remove '${src}'"
     fi
@@ -125,6 +125,13 @@ for picdir in $(adb shell "ls ${MOTO_PIC_DIR}"); do
     # exit_if_fail "adb pull ${picpath}"
 done
 
+MOTO_DCIM_SUBDIRS=( "GIF" "Live message" "MV2" "Screenshots" "Video Editor" "Video trimmer" "Videocaptures" )
+for dir in "${MOTO_DCIM_SUBDIRS[@]}"; do
+    # TODO: pull each folder in list
+    TOP_LEVEL_PATH="${MOTO_DCIM_DIR}/${dir}"
+    pull_and_delete "${TOP_LEVEL_PATH}" "${PIC_BACKUP_DIR}"
+done
+
 # Camera
 pull_folder "${MOTO_CAM_DIR}" "${PIC_BACKUP_DIR}"
 
@@ -133,7 +140,7 @@ adb shell "mv ${MOTO_CAM_DIR} ${MOTO_MOVED_CAM_DIR}"
 
 # private files
 MOVED_PRIVATE_DIR=$(join_by / ${MOTO_PRIVATE_DIR} ${CURR_DATE})
-adb shell mkdir -p "${MOVED_PRIVATE_DIR}"
+adb shell 'mkdir -p "${MOVED_PRIVATE_DIR}"'
 for file in $(adb shell "ls ${MOTO_PRIVATE_DIR}"); do
     filepath=$(join_by / ${MOTO_PRIVATE_DIR} ${file})
     if [ "${filepath}" == "${MOVED_PRIVATE_DIR}" ]; then
@@ -142,7 +149,7 @@ for file in $(adb shell "ls ${MOTO_PRIVATE_DIR}"); do
     pull_folder "${filepath}" "${PRIVATE_BACKUP_DIR}"
     if [ $? -eq 0 ]; then
         echo "Moving file ${filepath} to ${MOVED_PRIVATE_DIR}"
-        adb shell mv "${filepath}" "${MOVED_PRIVATE_DIR}"
+        adb shell 'mv "${filepath}" "${MOVED_PRIVATE_DIR}"'
         exit_if_fail "mv private ${file}"
     fi
 done
@@ -166,11 +173,11 @@ done
 # SMS Backup and Restore
 DOWNLOAD_DIR=$(join_by / ${MOTO_MAIN_STORAGE_DIR} "Download")
 SMS_GZIP_DEST=$(join_by / "${DATA_BACKUP_DIR}" "smsbackup${CURR_DATETIME}.tar.gz")
-SIZE_SMS=$(adb shell du -s ${MOTO_SMSBACKUPANDRESTORE} | awk '{printf "%d", $1}')
-MOTO_EXT_SPACE_AVAIL=$(adb shell df ${DOWNLOAD_DIR} | tail -1 | awk '{print $4}')
+SIZE_SMS=$(adb shell "du -s ${MOTO_SMSBACKUPANDRESTORE}" | awk '{printf "%d", $1}')
+MOTO_EXT_SPACE_AVAIL=$(adb shell "df ${DOWNLOAD_DIR}" | tail -1 | awk '{print $4}')
 if [ $((${MOTO_EXT_SPACE_AVAIL} - ${SIZE_SMS} > 100000)) ]; then # units in KB
     echo "***will compress sms/mms..."
-    adb shell tar -czvf - "${MOTO_SMSBACKUPANDRESTORE}" > "${SMS_GZIP_DEST}"
+    adb shell 'tar -czvf - "${MOTO_SMSBACKUPANDRESTORE}"' > "${SMS_GZIP_DEST}"
     exit_if_fail "gzip sms"
     # TODO: remove sms backup xml after pull
     # pull_and_delete "${SMS_GZIP_DEST}" "${DATA_BACKUP_DIR}"
