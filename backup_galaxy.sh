@@ -95,10 +95,6 @@ echo "Creating folder ${DATA_BACKUP_DIR}"
 mkdir -p "${DATA_BACKUP_DIR}"
 exit_if_fail "mkdir data"
 
-echo "Creating folder ${CALL_REC_BACKUP_DIR}"
-mkdir -p "${CALL_REC_BACKUP_DIR}"
-exit_if_fail "mkdir call rec"
-
 echo "Creating folder ${PIC_BACKUP_DIR}"
 mkdir -p "${PIC_BACKUP_DIR}"
 exit_if_fail "mkdir pic"
@@ -163,6 +159,9 @@ if [ $? -ne 0 ]; then
     # exit_if_fail "pull audio rec"
 fi
 
+echo "Creating folder ${CALL_REC_BACKUP_DIR}"
+mkdir -p "${CALL_REC_BACKUP_DIR}"
+exit_if_fail "mkdir call rec"
 for amr in $(adb shell ls "${MOTO_CALL_REC_DIR}"); do
     amrpath=`join_by / ${MOTO_CALL_REC_DIR} ${amr}`
     pull_and_delete "${amrpath}" "${CALL_REC_BACKUP_DIR}"
