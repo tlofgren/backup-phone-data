@@ -153,11 +153,7 @@ done
 
 #####
 # Recordings
-pull_folder "${MOTO_AUDIO_REC_DIR}" "${DATA_BACKUP_DIR}"
-if [ $? -ne 0 ]; then
-    pull_and_delete "${MOTO_MAIN_STORAGE_DIR}/EasyVoiceRecorder" "${DATA_BACKUP_DIR}"
-    # exit_if_fail "pull audio rec"
-fi
+pull_and_delete "${MOTO_AUDIO_REC_DIR}" "${DATA_BACKUP_DIR}"
 
 echo "Creating folder ${CALL_REC_BACKUP_DIR}"
 mkdir -p "${CALL_REC_BACKUP_DIR}"
