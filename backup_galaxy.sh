@@ -81,6 +81,7 @@ MOTO_SMSBACKUPANDRESTORE="${MOTO_MAIN_STORAGE_DIR}/smsBackupAndRestore"
 MOTO_SIGNAL_DIR=$(join_by / "${MOTO_MAIN_STORAGE_DIR}" "Signal")
 MOTO_CARBON_DIR="${MOTO_MAIN_STORAGE_DIR}/carbon"
 MOTO_AMDROID_DIR="${MOTO_MAIN_STORAGE_DIR}/AMdroid"
+TASKS_DIR="${MOTO_MAIN_STORAGE_DIR}/tasks"
 
 #####
 # setup
@@ -221,3 +222,7 @@ pull_and_delete "${MOTO_CARBON_DIR}" "${DATA_BACKUP_DIR}"
 ####
 # AMdroid
 pull_files_and_delete "${MOTO_AMDROID_DIR}" "${DATA_BACKUP_DIR}"
+
+####
+# Tasks.org
+pull_files_and_delete "${TASKS_DIR}" "${DATA_BACKUP_DIR}/tasks"
