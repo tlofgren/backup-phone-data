@@ -189,7 +189,7 @@ fi
 
 #####
 # Folders on Main Storage to keep after backup
-MOTO_TOP_LEVEL_DIRS=( "AMdroid" "beam" "Documents" "Download" "games" "Keepass" "Playlists" "Podcasts" "roms" "slide" "SmsContactsBackup" "Snapchat" "Voicemails" "WhatsApp" )
+MOTO_TOP_LEVEL_DIRS=( "AMdroid" "beam" "Documents" "Download" "games" "Keepass" "Playlists" "roms" "slide" "SmsContactsBackup" "Snapchat" "Voicemails" "WhatsApp" )
 for dir in "${MOTO_TOP_LEVEL_DIRS[@]}"; do
     # TODO: pull each folder in list
     TOP_LEVEL_PATH="${MOTO_MAIN_STORAGE_DIR}/${dir}"
