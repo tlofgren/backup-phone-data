@@ -49,7 +49,7 @@ pull_files_and_delete() {
     local src_dir="$1"
     local tgt_dir="$2"
     for file in $(adb shell ls "${src_dir}"); do
-        filepath=`join_by / ${src_dir} ${file}`
+        filepath=$(join_by / "${src_dir}" "${file}")
         pull_and_delete "${filepath}" "${tgt_dir}"
     done
 }
@@ -69,6 +69,7 @@ PRIVATE_BACKUP_DIR="/media/tyler/shared/tyler/backup/appdata/local/toosexy/${CUR
 MOTO_MAIN_STORAGE_DIR="/storage/emulated/0"
 # MOTO_EXTERNAL_STORAGE_DIR="/storage/8014-13FF"
 MOTO_PIC_DIR="${MOTO_MAIN_STORAGE_DIR}/Pictures"
+MOTO_MOVIE_DIR="${MOTO_MAIN_STORAGE_DIR}/Movies"
 MOTO_DCIM_DIR="${MOTO_MAIN_STORAGE_DIR}/DCIM"
 MOTO_CAM_DIR="${MOTO_MAIN_STORAGE_DIR}/DCIM/Camera"
 MOTO_PRIVATE_DIR="${MOTO_MAIN_STORAGE_DIR}/.toozexy"
@@ -76,7 +77,7 @@ MOTO_MOVED_CAM_DIR=$(join_by / "${MOTO_DCIM_DIR}" "${CURR_DATE}")
 MOTO_CALL_REC_DIR="/sdcard/CubeCallRecorder/All"
 MOTO_AUDIO_REC_DIR="${MOTO_MAIN_STORAGE_DIR}/EasyVoiceRecorder"
 MOTO_WECHAT_DIR="${MOTO_MAIN_STORAGE_DIR}/tencent/" # TODO
-MOTO_NOVABACKUP_DIR="${MOTO_MAIN_STORAGE_DIR}/data/com.teslacoilsw.launcher/backup"
+MOTO_NOVABACKUP_DIR="${MOTO_MAIN_STORAGE_DIR}/backup/Nova"
 MOTO_SMSBACKUPANDRESTORE="${MOTO_MAIN_STORAGE_DIR}/smsBackupAndRestore"
 MOTO_SIGNAL_DIR=$(join_by / "${MOTO_MAIN_STORAGE_DIR}" "Signal")
 MOTO_CARBON_DIR="${MOTO_MAIN_STORAGE_DIR}/carbon"
@@ -100,9 +101,9 @@ echo "Creating folder ${PIC_BACKUP_DIR}"
 mkdir -p "${PIC_BACKUP_DIR}"
 exit_if_fail "mkdir pic"
 
-echo "Creating folder ${PRIVATE_BACKUP_DIR}"
-mkdir -p "${PRIVATE_BACKUP_DIR}"
-exit_if_fail "mkdir sexy"
+# echo "Creating folder ${PRIVATE_BACKUP_DIR}"
+# mkdir -p "${PRIVATE_BACKUP_DIR}"
+# exit_if_fail "mkdir sexy"
 
 #####
 # Apps installed
@@ -117,9 +118,15 @@ adb shell cmd package list packages -u > "${DATA_BACKUP_APPLISTS}/pkg_list_unins
 #####
 # Pictures
 for picdir in $(adb shell ls "${MOTO_PIC_DIR}"); do
-    picpath=`join_by / ${MOTO_PIC_DIR} ${picdir}`
+    picpath=$(join_by / "${MOTO_PIC_DIR}" "${picdir}")
     pull_and_delete "${picpath}" "${PIC_BACKUP_DIR}"
     # exit_if_fail "adb pull ${picpath}"
+done
+
+# Movies
+for picdir in $(adb shell ls "${MOTO_MOVIE_DIR}"); do
+    picpath=$(join_by / "${MOTO_MOVIE_DIR}" "${picdir}")
+    pull_and_delete "${picpath}" "${PIC_BACKUP_DIR}"
 done
 
 MOTO_DCIM_SUBDIRS=( "GIF" "Live message" "MV2" "Screenshots" "Video Editor" "Video trimmer" "Videocaptures" )
@@ -136,20 +143,20 @@ echo "Moving Camera dir ${MOTO_CAM_DIR} to ${MOTO_MOVED_CAM_DIR}"
 adb shell mv "${MOTO_CAM_DIR}" "${MOTO_MOVED_CAM_DIR}"
 
 # private files
-MOVED_PRIVATE_DIR=$(join_by / ${MOTO_PRIVATE_DIR} ${CURR_DATE})
-adb shell mkdir -p "${MOVED_PRIVATE_DIR}"
-for file in $(adb shell ls "${MOTO_PRIVATE_DIR}"); do
-    filepath=$(join_by / ${MOTO_PRIVATE_DIR} ${file})
-    if [ "${filepath}" == "${MOVED_PRIVATE_DIR}" ]; then
-        continue;
-    fi
-    pull_folder "${filepath}" "${PRIVATE_BACKUP_DIR}"
-    if [ $? -eq 0 ]; then
-        echo "Moving file ${filepath} to ${MOVED_PRIVATE_DIR}"
-        adb shell mv "${filepath}" "${MOVED_PRIVATE_DIR}"
-        exit_if_fail "mv private ${file}"
-    fi
-done
+# MOVED_PRIVATE_DIR=$(join_by / ${MOTO_PRIVATE_DIR} ${CURR_DATE})
+# adb shell mkdir -p "${MOVED_PRIVATE_DIR}"
+# for file in $(adb shell ls "${MOTO_PRIVATE_DIR}"); do
+#     filepath=$(join_by / ${MOTO_PRIVATE_DIR} ${file})
+#     if [ "${filepath}" == "${MOVED_PRIVATE_DIR}" ]; then
+#         continue;
+#     fi
+#     pull_folder "${filepath}" "${PRIVATE_BACKUP_DIR}"
+#     if [ $? -eq 0 ]; then
+#         echo "Moving file ${filepath} to ${MOVED_PRIVATE_DIR}"
+#         adb shell mv "${filepath}" "${MOVED_PRIVATE_DIR}"
+#         exit_if_fail "mv private ${file}"
+#     fi
+# done
 # TODO: remove files from moto
 
 #####
@@ -160,7 +167,7 @@ echo "Creating folder ${CALL_REC_BACKUP_DIR}"
 mkdir -p "${CALL_REC_BACKUP_DIR}"
 exit_if_fail "mkdir call rec"
 for amr in $(adb shell ls "${MOTO_CALL_REC_DIR}"); do
-    amrpath=`join_by / ${MOTO_CALL_REC_DIR} ${amr}`
+    amrpath=$(join_by / "${MOTO_CALL_REC_DIR}" "${amr}")
     pull_and_delete "${amrpath}" "${CALL_REC_BACKUP_DIR}"
     # exit_if_fail "pull amr ${amr}"
 done
@@ -189,7 +196,7 @@ fi
 
 #####
 # Folders on Main Storage to keep after backup
-MOTO_TOP_LEVEL_DIRS=( "AMdroid" "beam" "Documents" "Download" "games" "Keepass" "Playlists" "roms" "slide" "SmsContactsBackup" "Snapchat" "Voicemails" "WhatsApp" )
+MOTO_TOP_LEVEL_DIRS=( "AMdroid" "beam" "Documents" "Download" "games" "Keepass" "Playlists" "SmsContactsBackup" "Snapchat" "Voicemails" "WhatsApp" )
 for dir in "${MOTO_TOP_LEVEL_DIRS[@]}"; do
     # TODO: pull each folder in list
     TOP_LEVEL_PATH="${MOTO_MAIN_STORAGE_DIR}/${dir}"
@@ -225,4 +232,4 @@ pull_files_and_delete "${MOTO_AMDROID_DIR}" "${DATA_BACKUP_DIR}"
 
 ####
 # Tasks.org
-pull_files_and_delete "${TASKS_DIR}" "${DATA_BACKUP_DIR}/tasks"
+pull_files_and_delete "${TASKS_DIR}" "${DATA_BACKUP_DIR}/tasks/"
