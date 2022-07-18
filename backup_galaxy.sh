@@ -48,9 +48,34 @@ pull_and_delete() {
 pull_files_and_delete() {
     local src_dir="$1"
     local tgt_dir="$2"
+    local IFS=$(echo -en "\n\b")
     for file in $(adb shell ls "${src_dir}"); do
         filepath=$(join_by / "${src_dir}" "${file}")
         pull_and_delete "${filepath}" "${tgt_dir}"
+    done
+}
+
+# handle spaces
+# https://www.cyberciti.biz/tips/handling-filenames-with-spaces-in-bash.html
+list_files_spaces() {
+    local src_dir="$1"
+    SAVEIFS=$IFS
+    IFS=$(echo -en "\n\b")
+    for f in $(adb shell ls "${src_dir}")
+    do
+        echo "$f"
+    done
+    IFS=$SAVEIFS
+}
+
+test_pull_files_and_delete() {
+    local src_dir="$1"
+    local tgt_dir="$2"
+    local IFS=$(echo -en "\n\b")
+    for file in $(adb shell ls "${src_dir}"); do
+        filepath=$(join_by / "${src_dir}" "${file}")
+        echo "test_pull_files_and_delete: Filepath: ${filepath}"
+        echo "test_pull_files_and_delete: pull_and_delete ${filepath} ${tgt_dir}"
     done
 }
 
@@ -61,7 +86,8 @@ CURR_DATE=`date +%Y-%m-%d`
 CURR_YEAR=`date +%Y`
 
 DATA_BACKUP_DIR="/home/tyler/backup/galaxy/${CURR_DATETIME}"
-PIC_BACKUP_DIR="/media/tyler/shared/Pictures/${CURR_YEAR}/${CURR_DATE}"
+# PIC_BACKUP_DIR="/media/tyler/shared/Pictures/${CURR_YEAR}/${CURR_DATE}"
+PIC_BACKUP_DIR="/media/tyler/allmedia/allpictures/morepictures/${CURR_YEAR}/${CURR_DATE}"
 CALL_REC_BACKUP_DIR="${DATA_BACKUP_DIR}/CubeCallRecorder"
 ROCKETPLAYER_BACKUP_DIR="${DATA_BACKUP_DIR}/RocketPlayer"
 PRIVATE_BACKUP_DIR="/media/tyler/shared/tyler/backup/appdata/local/toosexy/${CURR_DATE}"
@@ -75,7 +101,8 @@ MOTO_CAM_DIR="${MOTO_MAIN_STORAGE_DIR}/DCIM/Camera"
 MOTO_PRIVATE_DIR="${MOTO_MAIN_STORAGE_DIR}/.toozexy"
 MOTO_MOVED_CAM_DIR=$(join_by / "${MOTO_DCIM_DIR}" "${CURR_DATE}")
 MOTO_CALL_REC_DIR="/sdcard/CubeCallRecorder/All"
-MOTO_AUDIO_REC_DIR="${MOTO_MAIN_STORAGE_DIR}/EasyVoiceRecorder"
+# MOTO_AUDIO_REC_DIR="${MOTO_MAIN_STORAGE_DIR}/EasyVoiceRecorder"
+MOTO_AUDIO_REC_DIR="${MOTO_MAIN_STORAGE_DIR}/Easy Voice Recorder"
 MOTO_WECHAT_DIR="${MOTO_MAIN_STORAGE_DIR}/tencent/" # TODO
 MOTO_NOVABACKUP_DIR="${MOTO_MAIN_STORAGE_DIR}/backup/Nova"
 MOTO_SMSBACKUPANDRESTORE="${MOTO_MAIN_STORAGE_DIR}/smsBackupAndRestore"
@@ -83,6 +110,7 @@ MOTO_SIGNAL_DIR=$(join_by / "${MOTO_MAIN_STORAGE_DIR}" "Signal")
 MOTO_CARBON_DIR="${MOTO_MAIN_STORAGE_DIR}/carbon"
 MOTO_AMDROID_DIR="${MOTO_MAIN_STORAGE_DIR}/AMdroid"
 TASKS_DIR="${MOTO_MAIN_STORAGE_DIR}/tasks"
+GENERAL_BACKUP_DIR="${MOTO_MAIN_STORAGE_DIR}/backup"
 
 #####
 # setup
@@ -117,6 +145,8 @@ adb shell cmd package list packages -u > "${DATA_BACKUP_APPLISTS}/pkg_list_unins
 
 #####
 # Pictures
+SAVEIFS=$IFS
+IFS=$(echo -en "\n\b")
 for picdir in $(adb shell ls "${MOTO_PIC_DIR}"); do
     picpath=$(join_by / "${MOTO_PIC_DIR}" "${picdir}")
     pull_and_delete "${picpath}" "${PIC_BACKUP_DIR}"
@@ -129,7 +159,7 @@ for picdir in $(adb shell ls "${MOTO_MOVIE_DIR}"); do
     pull_and_delete "${picpath}" "${PIC_BACKUP_DIR}"
 done
 
-MOTO_DCIM_SUBDIRS=( "GIF" "Live message" "MV2" "Screenshots" "Video Editor" "Video trimmer" "Videocaptures" )
+MOTO_DCIM_SUBDIRS=( "Artivive" "CamScanner" "GIF" "Live message" "MV2" "PhotosEditor" "Restored" "Screen recordings" "Screenshots" "Tiktok" "Video Editor" "Video trimmer" "Videocaptures" "Video captures" )
 for dir in "${MOTO_DCIM_SUBDIRS[@]}"; do
     # TODO: pull each folder in list
     TOP_LEVEL_PATH="${MOTO_DCIM_DIR}/${dir}"
@@ -233,3 +263,9 @@ pull_files_and_delete "${MOTO_AMDROID_DIR}" "${DATA_BACKUP_DIR}"
 ####
 # Tasks.org
 pull_files_and_delete "${TASKS_DIR}" "${DATA_BACKUP_DIR}/tasks/"
+
+####
+# General backup files: AntennaPod, Track & Graph, MediLog...
+pull_files_and_delete "${GENERAL_BACKUP_DIR}" "${DATA_BACKUP_DIR}/"
+
+IFS=$SAVEIFS
