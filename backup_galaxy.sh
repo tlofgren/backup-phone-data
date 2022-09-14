@@ -23,7 +23,7 @@ function join_by {
 pull_folder() {
     local src="$1"
     local tgt="$2"
-    adb pull "${src}" "${tgt}"
+    adb pull -a "${src}" "${tgt}"
     local exitcode=$?
     if [ ${exitcode} -ne 0 ]; then
         echo "Warning: could not pull '${src}' to '${target}'"
@@ -246,7 +246,7 @@ pull_files_and_delete "${MOTO_SIGNAL_DIR}" "${DATA_BACKUP_DIR}"
 
 #####
 # Nova
-pull_files_and_delete "${MOTO_NOVABACKUP_DIR}" "${DATA_BACKUP_DIR}"
+# pull_files_and_delete "${MOTO_NOVABACKUP_DIR}" "${DATA_BACKUP_DIR}"
 
 #####
 # Carbon/Helium Backup
