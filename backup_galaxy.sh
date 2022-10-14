@@ -100,7 +100,7 @@ MOTO_DCIM_DIR="${MOTO_MAIN_STORAGE_DIR}/DCIM"
 MOTO_CAM_DIR="${MOTO_MAIN_STORAGE_DIR}/DCIM/Camera"
 MOTO_PRIVATE_DIR="${MOTO_MAIN_STORAGE_DIR}/.toozexy"
 MOTO_MOVED_CAM_DIR=$(join_by / "${MOTO_DCIM_DIR}" "${CURR_DATE}")
-MOTO_CALL_REC_DIR="/sdcard/CubeCallRecorder/All"
+MOTO_CALL_REC_DIR="${MOTO_MAIN_STORAGE_DIR}/Documents/CubeCallRecorder"
 # MOTO_AUDIO_REC_DIR="${MOTO_MAIN_STORAGE_DIR}/EasyVoiceRecorder"
 MOTO_AUDIO_REC_DIR="${MOTO_MAIN_STORAGE_DIR}/Easy Voice Recorder"
 MOTO_WECHAT_DIR="${MOTO_MAIN_STORAGE_DIR}/tencent/" # TODO
@@ -192,15 +192,7 @@ adb shell mv "${MOTO_CAM_DIR}" "${MOTO_MOVED_CAM_DIR}"
 #####
 # Recordings
 pull_and_delete "${MOTO_AUDIO_REC_DIR}" "${DATA_BACKUP_DIR}"
-
-echo "Creating folder ${CALL_REC_BACKUP_DIR}"
-mkdir -p "${CALL_REC_BACKUP_DIR}"
-exit_if_fail "mkdir call rec"
-for amr in $(adb shell ls "${MOTO_CALL_REC_DIR}"); do
-    amrpath=$(join_by / "${MOTO_CALL_REC_DIR}" "${amr}")
-    pull_and_delete "${amrpath}" "${CALL_REC_BACKUP_DIR}"
-    # exit_if_fail "pull amr ${amr}"
-done
+pull_and_delete "${MOTO_CALL_REC_DIR}" "${DATA_BACKUP_DIR}"
 
 #####
 # SMS Backup and Restore
@@ -262,7 +254,7 @@ pull_files_and_delete "${MOTO_AMDROID_DIR}" "${DATA_BACKUP_DIR}"
 
 ####
 # Tasks.org
-pull_files_and_delete "${TASKS_DIR}" "${DATA_BACKUP_DIR}/tasks/"
+pull_files_and_delete "${TASKS_DIR}" "${DATA_BACKUP_DIR}"
 
 ####
 # General backup files: AntennaPod, Track & Graph, MediLog...
