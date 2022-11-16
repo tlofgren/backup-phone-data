@@ -213,8 +213,8 @@ adb shell mv "${MOTO_CAM_DIR}" "${MOTO_MOVED_CAM_DIR}"
 
 #####
 # Recordings
-pull_and_delete "${MOTO_AUDIO_REC_DIR}" "${DATA_BACKUP_DIR}"
-pull_and_delete "${MOTO_CALL_REC_DIR}" "${DATA_BACKUP_DIR}"
+pull_files_and_delete "${MOTO_AUDIO_REC_DIR}" "${DATA_BACKUP_DIR}"
+pull_files_and_delete "${MOTO_CALL_REC_DIR}" "${DATA_BACKUP_DIR}"
 
 #####
 # SMS Backup and Restore
@@ -264,7 +264,7 @@ pull_files_and_delete "${MOTO_SIGNAL_DIR}" "${DATA_BACKUP_DIR}"
 
 #####
 # Carbon/Helium Backup
-pull_and_delete "${MOTO_CARBON_DIR}" "${DATA_BACKUP_DIR}"
+pull_files_and_delete "${MOTO_CARBON_DIR}" "${DATA_BACKUP_DIR}"
 
 #####
 # Tencent
