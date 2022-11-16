@@ -20,13 +20,20 @@ function join_by {
     echo "$*";
 }
 
+escape_spaces() {
+    # Use this when calling `adb shell` to escape spaces in file and folder names
+    local arg="$1"
+    echo "${arg}" | sed 's/\([^\\]\) /\1\\ /g'
+}
+
 pull_folder() {
     local src="$1"
     local tgt="$2"
+    echo "Pulling ${src}"
     adb pull -a "${src}" "${tgt}"
     local exitcode=$?
     if [ ${exitcode} -ne 0 ]; then
-        echo "Warning: could not pull '${src}' to '${target}'"
+        echo "Warning: could not pull '${src}' to '${tgt}'"
     fi
     return ${exitcode}
 }
@@ -37,8 +44,9 @@ pull_and_delete() {
     pull_folder "${src}" "${tgt}"
     local exitcode=$?
     if [ ${exitcode} -eq 0 ]; then
-        echo "Deleting '${src}'..."
-        adb shell rm -rf "${src}"
+        local escaped=$(escape_spaces "${src}")
+        echo "Deleting '${escaped}'"
+        adb shell rm -rf "${escaped}"
     else
         echo "Warning from pull_and_delete: will not remove '${src}'"
     fi
@@ -46,10 +54,11 @@ pull_and_delete() {
 }
 
 pull_files_and_delete() {
+    # Pull and delete files but do not delete src dir
     local src_dir="$1"
-    local tgt_dir="$2"
+    local tgt_dir="$2"  # Don't need to escape strings for host/target
     local IFS=$(echo -en "\n\b")
-    for file in $(adb shell ls "${src_dir}"); do
+    for file in $(adb shell ls $(escape_spaces "${src_dir}")); do
         filepath=$(join_by / "${src_dir}" "${file}")
         pull_and_delete "${filepath}" "${tgt_dir}"
     done
@@ -57,25 +66,27 @@ pull_files_and_delete() {
 
 # handle spaces
 # https://www.cyberciti.biz/tips/handling-filenames-with-spaces-in-bash.html
-list_files_spaces() {
-    local src_dir="$1"
-    SAVEIFS=$IFS
-    IFS=$(echo -en "\n\b")
-    for f in $(adb shell ls "${src_dir}")
-    do
-        echo "$f"
-    done
-    IFS=$SAVEIFS
-}
+# list_files_spaces() {
+#     local src_dir="$1"
+#     SAVEIFS=$IFS
+#     IFS=$(echo -en "\n\b")
+#     for f in $(adb shell ls "${src_dir}")
+#     do
+#         echo "$f"
+#     done
+#     IFS=$SAVEIFS
+# }
 
 test_pull_files_and_delete() {
-    local src_dir="$1"
+    local src_dir=$(escape_spaces "$1")
     local tgt_dir="$2"
     local IFS=$(echo -en "\n\b")
     for file in $(adb shell ls "${src_dir}"); do
-        filepath=$(join_by / "${src_dir}" "${file}")
+        filepath=$(join_by / "${src_dir}" $(escape_spaces "${file}"))
         echo "test_pull_files_and_delete: Filepath: ${filepath}"
+        adb shell readlink -f "${filepath}"
         echo "test_pull_files_and_delete: pull_and_delete ${filepath} ${tgt_dir}"
+        readlink -f "${tgt_dir}"
     done
 }
 
@@ -121,6 +132,17 @@ if [ $ADB_RUNNING -ne 0 ]; then
     exit $ADB_RUNNING
 fi
 
+### DEBUGGING
+# test_src="${MOTO_MAIN_STORAGE_DIR}/Download/test adb spaces"
+# test_target="./test targe"
+
+# # pull_folder "${test_src}" "${test_target}"
+# pull_files_and_delete "${test_src}" "${test_target}"
+
+# IFS=$SAVEIFS
+# exit $?
+
+
 echo "Creating folder ${DATA_BACKUP_DIR}"
 mkdir -p "${DATA_BACKUP_DIR}"
 exit_if_fail "mkdir data"
@@ -147,21 +169,21 @@ adb shell cmd package list packages -u > "${DATA_BACKUP_APPLISTS}/pkg_list_unins
 # Pictures
 SAVEIFS=$IFS
 IFS=$(echo -en "\n\b")
-for picdir in $(adb shell ls "${MOTO_PIC_DIR}"); do
+for picdir in $(adb shell ls $(escape_spaces "${MOTO_PIC_DIR}")); do
     picpath=$(join_by / "${MOTO_PIC_DIR}" "${picdir}")
     pull_and_delete "${picpath}" "${PIC_BACKUP_DIR}"
     # exit_if_fail "adb pull ${picpath}"
 done
 
 # Movies
-for picdir in $(adb shell ls "${MOTO_MOVIE_DIR}"); do
+for picdir in $(adb shell ls $(escape_spaces "${MOTO_MOVIE_DIR}")); do
     picpath=$(join_by / "${MOTO_MOVIE_DIR}" "${picdir}")
     pull_and_delete "${picpath}" "${PIC_BACKUP_DIR}"
 done
 
-MOTO_DCIM_SUBDIRS=( "Artivive" "CamScanner" "GIF" "Live message" "MV2" "PhotosEditor" "Restored" "Screen recordings" "Screenshots" "Tiktok" "Video Editor" "Video trimmer" "Videocaptures" "Video captures" )
+MOTO_DCIM_SUBDIRS=( "Artivive" "CamScanner" "GIF" "Live message" "MV2" "PhotosEditor" "Restored" "Screen recordings" "Screenshots" "Snapchat" "Tiktok" "Video Editor" "Video trimmer" "Videocaptures" "Video captures" )
 for dir in "${MOTO_DCIM_SUBDIRS[@]}"; do
-    # TODO: pull each folder in list
+    # TODO: pull each folder in list and move to moved cam dir
     TOP_LEVEL_PATH="${MOTO_DCIM_DIR}/${dir}"
     pull_and_delete "${TOP_LEVEL_PATH}" "${PIC_BACKUP_DIR}"
 done
