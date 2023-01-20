@@ -181,7 +181,7 @@ for picdir in $(adb shell ls $(escape_spaces "${MOTO_MOVIE_DIR}")); do
     pull_and_delete "${picpath}" "${PIC_BACKUP_DIR}"
 done
 
-MOTO_DCIM_SUBDIRS=( "Artivive" "CamScanner" "GIF" "Live message" "MV2" "PhotosEditor" "Restored" "Screen recordings" "Screenshots" "Snapchat" "Tiktok" "Video Editor" "Video trimmer" "Videocaptures" "Video captures" )
+MOTO_DCIM_SUBDIRS=( "Artivive" "AR Emoji camera" "CamScanner" "Duolingo" "GIF" "Live message" "MV2" "PhotosEditor" "Restored" "Screen recordings" "Screenshots" "Snapchat" "Tiktok" "Video Editor" "Video trimmer" "Videocaptures" "Video captures" )
 for dir in "${MOTO_DCIM_SUBDIRS[@]}"; do
     # TODO: pull each folder in list and move to moved cam dir
     TOP_LEVEL_PATH="${MOTO_DCIM_DIR}/${dir}"
