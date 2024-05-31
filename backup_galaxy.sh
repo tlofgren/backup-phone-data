@@ -283,3 +283,4 @@ pull_files_and_delete "${TASKS_DIR}" "${DATA_BACKUP_DIR}"
 pull_files_and_delete "${GENERAL_BACKUP_DIR}" "${DATA_BACKUP_DIR}/"
 
 IFS=$SAVEIFS
+echo "Done!"
